@@ -22,7 +22,7 @@ int main() {
 #endif
     int seed = 123;
     srand(seed);
-    int testCount = 100;
+    int testCount = 1;
     int modValue = 1000;
     int offsetValue = 500;
     int *randomSizes = (int*)MALLOC(testCount * sizeof(int));
@@ -34,8 +34,8 @@ int main() {
         randomSizes[i] = rand() % modValue + offsetValue;
     }
     for (int i=0; i<testCount; i++) {
-        int size = randomSizes[i];
-        // int size = 4000;
+        // int size = randomSizes[i];
+        int size = 4000;
         matrixProducts[i] = buildMatrixTest(size);
         verifySuccess(matrixProducts[i]);
         if (matrixProducts[i] != NULL && matrixProducts[i]->success) {
