@@ -17,7 +17,11 @@ typedef struct Block { // Block structure to hold metadata
     char free;  // 0=> Not free, 1=> Free
     struct Block* next; // Pointer to the next block
     struct Block* prev; // Pointer to the previous block
-} Block;
+    #ifdef USE_CANARIES
+        const char* filename; // File name where memory was allocated
+        int line_number; // Line number where memory was allocated
+    #endif
+} __attribute__((packed)) Block; // close Block
 
 static void* set_size_return_data_ptr(Block* block, size_t size);
 
@@ -92,7 +96,12 @@ static void* set_size_return_data_ptr(Block* block, size_t size) {
 } // close get_data_pointer
 
 // Function to allocate memory from the pool
-void* mymalloc(size_t size) {
+#ifdef USE_CANARIES
+void* mymalloc(size_t size, const char* file, int line)
+#else
+void* mymalloc(size_t size)
+#endif
+{
     Block *current = head; // Start from the head
     while (current < head + MEMORY_SIZE) { // Iterate through the blocks
         if (current->free && current->actual_size >= size) { //check if block is free and big enough
@@ -112,6 +121,10 @@ void* mymalloc(size_t size) {
                 current->actual_size = size; // Block was resized to be exact
             } // close if block can be split
             current->free = 0; // mark as not free
+            #ifdef USE_CANARIES
+                current->filename = file; // Set the file name
+                current->line_number = line; // Set the line number
+            #endif
             return set_size_return_data_ptr(current, size); // Return the pointer to the user
         } // close if block is free and big enough
         current = current->next; // Move to the next block in while search
@@ -125,12 +138,13 @@ void check_canaries(Block* block) {
         CANARY_TYPE* canary;
         canary = (CANARY_TYPE*)((uint8_t*)block + sizeof(Block));
         if (*canary != CANARY_VALUE) {
-            printf("Memory Corruption Has Been Detected!\n");
+            printf("Memory Corruption Detected! Allocated in file %s at line %d\n", block->filename, block->line_number);
             exit(EXIT_FAILURE);
         }
+        printf("Checking canaries\n");
         canary = (CANARY_TYPE*)((uint8_t*)canary + CANARY_SIZE + block->size);
         if (*canary != CANARY_VALUE) {
-            printf("Memory Corruption Has Been Detected!\n");
+            printf("Memory Corruption Detected! Allocated in file %s at line %d\n", block->filename, block->line_number);
             exit(EXIT_FAILURE);
         }
 }
@@ -158,4 +172,3 @@ void display_blocks() {
         current = current->next; // Move to the next block
     } // close while loop
 } // close display_blocks
-

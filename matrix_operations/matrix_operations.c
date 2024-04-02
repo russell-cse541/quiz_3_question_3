@@ -2,15 +2,13 @@
 #include "../memory_allocator/memory_allocator.h"
 #include <stdio.h>
 
-#ifdef USE_MY_MALLOC
-    #define MALLOC mymalloc
-    #define FREE myfree
-    #include "memory_allocator/memory_allocator.h"
+#ifdef USE_CANARIES
+#define MALLOC(size) mymalloc(size, __FILE__, __LINE__)
 #else
-    #include <stdlib.h>
-    #define MALLOC malloc
-    #define FREE free
+#define MALLOC(size) mymalloc(size)
 #endif
+#define FREE myfree
+
 
 static int** create_identity_matrix(int size);
 static int** multiply_matrices(int** matrix1, int** matrix2, int size);

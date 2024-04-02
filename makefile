@@ -1,24 +1,21 @@
 CC = gcc
-CFLAGS = -I. -I./matrix_operations -I./memory_allocator
+CFLAGS = -I. -I./memory_allocator
 
-DEPS = matrix_operations/matrix_operations.h memory_allocator/memory_allocator.h
-OBJ = matrix_test.o matrix_operations/matrix_operations.o memory_allocator/memory_allocator.o
+DEPS = memory_allocator/memory_allocator.h
+OBJ = test.o memory_allocator/memory_allocator.o
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-matrix_test: $(OBJ)
+test_binary: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-.PHONY: clean test_mymalloc
-
 clean:
-	rm -f $(OBJ) matrix_test
+	rm -f $(OBJ) test_binary
 
-test_malloc: clean matrix_test
-	./matrix_test
+test: clean test_binary
+	./test_binary
 
-test_mymalloc: CFLAGS += -DUSE_MY_MALLOC
-test_mymalloc: clean matrix_test
-	$(CC) -c -o matrix_operations/matrix_operations.o matrix_operations/matrix_operations.c $(CFLAGS)
-	./matrix_test
+test_canary: CFLAGS += -DUSE_CANARIES
+test_canary: clean test
+	./test_binary
